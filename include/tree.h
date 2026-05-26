@@ -4,70 +4,70 @@
 
 #include <vector>
 
-struct NodeItem {
-    char symbol;
-    std::vector<NodeItem*> branches;
+struct PMNode {
+    char value;
+    std::vector<PMNode*> children;
 
-    explicit NodeItem(char ch = '\0') : symbol(ch) {}
+    explicit PMNode(char val = '\0') : value(val) {}
 };
 
-class PermutationTree {
+class PMTree {
  public:
-    explicit PermutationTree(const std::vector<char>& elements) {
-        totalCount = static_cast<int>(elements.size());
-        origin = new NodeItem();
-        constructTree(origin, elements);
+    explicit PMTree(const std::vector<char>& data) {
+        size_ = static_cast<int>(data.size());
+        root_ = new PMNode();
+        buildTree(root_, data);
     }
 
-    ~PermutationTree() {
-        eraseTree(origin);
+    ~PMTree() {
+        deleteTree(root_);
     }
 
-    NodeItem* fetchRoot() const {
-        return origin;
+    PMNode* getRoot() const {
+        return root_;
     }
 
-    int fetchSize() const {
-        return totalCount;
+    int getSize() const {
+        return size_;
     }
 
  private:
-    NodeItem* origin;
-    int totalCount;
+    PMNode* root_;
+    int size_;
 
-    void constructTree(NodeItem* current,
-                       const std::vector<char>& remaining) {
-        if (remaining.empty())
+    void buildTree(PMNode* node,
+                   const std::vector<char>& available) {
+        if (available.empty())
             return;
 
-        for (size_t idx = 0; idx < remaining.size(); ++idx) {
-            NodeItem* newNode = new NodeItem(remaining[idx]);
+        for (size_t i = 0; i < available.size(); ++i) {
+            PMNode* child = new PMNode(available[i]);
 
-            current->branches.push_back(newNode);
+            node->children.push_back(child);
 
-            std::vector<char> rest = remaining;
+            std::vector<char> next = available;
 
-            rest.erase(rest.begin() + idx);
+            next.erase(next.begin() + i);
 
-            constructTree(newNode, rest);
+            buildTree(child, next);
         }
     }
 
-    void eraseTree(NodeItem* current) {
-        if (current == nullptr)
+    void deleteTree(PMNode* node) {
+        if (node == nullptr)
             return;
 
-        for (auto child : current->branches)
-            eraseTree(child);
+        for (auto child : node->children)
+            deleteTree(child);
 
-        delete current;
+        delete node;
     }
 };
 
-std::vector<std::vector<char>> getAllPerms(PermutationTree& tree);
+std::vector<std::vector<char>> getAllPerms(PMTree& tree);
 
-std::vector<char> getPerm1(PermutationTree& tree, int index);
+std::vector<char> getPerm1(PMTree& tree, int num);
 
-std::vector<char> getPerm2(PermutationTree& tree, int index);
+std::vector<char> getPerm2(PMTree& tree, int num);
 
 #endif  // INCLUDE_TREE_H_
