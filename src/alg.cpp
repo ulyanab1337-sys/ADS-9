@@ -1,104 +1,88 @@
 // Copyright 2022 NNTU-CS
-#include "tree.h"
-
-#include <memory>
+#include <cstdint>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <locale>
 #include <vector>
 
-PMTree::PMTree(const std::vector<char>& symbols)
-    : originalSymbols(symbols) {
-    root = std::make_shared<Node>('\0');
-    buildTree(root, symbols);
+#include "tree.h"
+
+namespace {
+
+int64_t computeFactorial(int n) {
+    int64_t output = 1;
+
+    for (int i = 2; i <= n; ++i)
+        output *= i;
+
+    return output;
 }
 
-void PMTree::buildTree(std::shared_ptr<Node> node,
-                       std::vector<char> remaining) {
-    if (remaining.empty()) {
-        return;
+void traverseAll(NodeItem* ptr,
+                 std::vector<char>* buffer,
+                 std::vector<std::vector<char>>* storage) {
+    if (ptr->symbol != '\0')
+        buffer->push_back(ptr->symbol);
+
+    if (ptr->branches.empty()) {
+        if (!buffer->empty())
+            storage->push_back(*buffer);
+    } else {
+        for (auto branch : ptr->branches)
+            traverseAll(branch, buffer, storage);
     }
 
-    for (size_t i = 0; i < remaining.size(); i++) {
-        char ch = remaining[i];
-        auto child = std::make_shared<Node>(ch);
-        node->children.push_back(child);
-
-        std::vector<char> newRemaining;
-        for (size_t j = 0; j < remaining.size(); j++) {
-            if (j != i) {
-                newRemaining.push_back(remaining[j]);
-            }
-        }
-
-        buildTree(child, newRemaining);
-    }
+    if (ptr->symbol != '\0')
+        buffer->pop_back();
 }
 
-void PMTree::getAllPermutations(std::shared_ptr<Node> node,
-                                std::vector<char>& current,
-                                std::vector<std::vector<char>>& result) {
-    if (node->children.empty()) {
-        result.push_back(current);
-        return;
-    }
+}  // namespace
 
-    for (auto& child : node->children) {
-        current.push_back(child->value);
-        getAllPermutations(child, current, result);
-        current.pop_back();
-    }
+std::vector<std::vector<char>> getAllPerms(PermutationTree& tree) {
+    std::vector<std::vector<char>> storage;
+    std::vector<char> buffer;
+
+    traverseAll(tree.fetchRoot(), &buffer, &storage);
+
+    return storage;
 }
 
-int PMTree::getSubtreeSize(std::shared_ptr<Node> node) const {
-    if (node->children.empty()) {
-        return 1;
-    }
+std::vector<char> getPerm1(PermutationTree& tree, int position) {
+    std::vector<std::vector<char>> allVariants = getAllPerms(tree);
 
-    int size = 0;
-    for (auto& child : node->children) {
-        size += getSubtreeSize(child);
-    }
-    return size;
+    if (position < 1 || position > static_cast<int>(allVariants.size()))
+        return {};
+
+    return allVariants[position - 1];
 }
 
-std::vector<std::vector<char>> getAllPerms(PMTree& tree) {
-    std::vector<std::vector<char>> result;
-    std::vector<char> current;
-    tree.getAllPermutations(tree.root, current, result);
-    return result;
-}
+std::vector<char> getPerm2(PermutationTree& tree, int position) {
+    int64_t totalCombinations = computeFactorial(tree.fetchSize());
 
-std::vector<char> getPerm1(PMTree& tree, int num) {
-    std::vector<std::vector<char>> allPerms = getAllPerms(tree);
-    if (num >= 0 && num < static_cast<int>(allPerms.size())) {
-        return allPerms[num];
-    }
-    return std::vector<char>();
-}
+    if (position < 1 || position > totalCombinations)
+        return {};
 
-std::vector<char> getPerm2(PMTree& tree, int num) {
-    std::vector<char> result;
-    auto node = tree.root;
-    std::vector<char> remaining = tree.originalSymbols;
+    std::vector<char> output;
 
-    while (node->children.size() > 0) {
-        int cumulative = 0;
-        for (auto& child : node->children) {
-            int subtreeSize = tree.getSubtreeSize(child);
-            if (num < cumulative + subtreeSize) {
-                result.push_back(child->value);
-                node = child;
+    NodeItem* current = tree.fetchRoot();
 
-                for (auto it = remaining.begin(); it != remaining.end();
-                     ++it) {
-                    if (*it == child->value) {
-                        remaining.erase(it);
-                        break;
-                    }
-                }
-                break;
-            }
-            cumulative += subtreeSize;
-        }
+    int remaining = tree.fetchSize();
+    int64_t idx = position - 1;
+
+    while (!current->branches.empty()) {
+        int64_t groupSize = computeFactorial(remaining - 1);
+
+        int chosen = static_cast<int>(idx / groupSize);
+
+        idx %= groupSize;
+
+        current = current->branches[chosen];
+
+        output.push_back(current->symbol);
+
+        --remaining;
     }
 
-    return result;
+    return output;
 }
