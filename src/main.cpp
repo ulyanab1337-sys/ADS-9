@@ -2,57 +2,35 @@
 #include "tree.h"
 #include <iostream>
 #include <vector>
-#include <chrono>
-#include <random>
-#include <fstream>
-
-void printPerm(const std::vector<char>& perm) {
-    for (char c : perm) std::cout << c;
-    std::cout << std::endl;
-}
 
 int main() {
-    std::vector<char> in = {'1', '2', '3'};
-    PMTree tree(in);
+    std::vector<char> symbols = {'A', 'B', 'C'};
+    PMTree tree(symbols);
     
-    std::cout << "=== Пример ===" << std::endl;
+    std::vector<std::vector<char>> allPerms = getAllPerms(tree);
     
-    std::vector<std::vector<char>> perms = getAllPerms(tree);
-    for (size_t i = 0; i < perms.size(); i++) {
-        std::cout << i+1 << ": ";
-        printPerm(perms[i]);
+    std::cout << "All permutations:" << std::endl;
+    for (size_t i = 0; i < allPerms.size(); i++) {
+        std::cout << i << ": ";
+        for (char c : allPerms[i]) {
+            std::cout << c;
+        }
+        std::cout << std::endl;
     }
     
-    std::cout << "\n=== Эксперимент ===" << std::endl;
-    
-    std::ofstream fout("result/plot_data.txt");
-    
-    for (int n = 3; n <= 7; n++) {
-        std::vector<char> sym;
-        for (int i = 0; i < n; i++) sym.push_back('0' + i);
-        
-        PMTree t(sym);
-        
-        auto start = std::chrono::high_resolution_clock::now();
-        t.getAllPerms();
-        auto end = std::chrono::high_resolution_clock::now();
-        double timeAll = std::chrono::duration<double>(end - start).count();
-        
-        start = std::chrono::high_resolution_clock::now();
-        t.getPerm10();
-        end = std::chrono::high_resolution_clock::now();
-        double time10 = std::chrono::duration<double>(end - start).count();
-        
-        start = std::chrono::high_resolution_clock::now();
-        t.getPerm20();
-        end = std::chrono::high_resolution_clock::now();
-        double time20 = std::chrono::duration<double>(end - start).count();
-        
-        fout << n << " " << timeAll << " " << time10 << " " << time20 << std::endl;
-        std::cout << "n=" << n << ": " << timeAll << "s, " << time10 << "s, " << time20 << "s" << std::endl;
+    std::cout << "\nPermutation at index 1: ";
+    std::vector<char> perm1 = getPerm1(tree, 1);
+    for (char c : perm1) {
+        std::cout << c;
     }
+    std::cout << std::endl;
     
-    fout.close();
+    std::cout << "Permutation at index 2 (optimized): ";
+    std::vector<char> perm2 = getPerm2(tree, 2);
+    for (char c : perm2) {
+        std::cout << c;
+    }
+    std::cout << std::endl;
     
     return 0;
 }
