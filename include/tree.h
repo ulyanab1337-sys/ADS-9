@@ -6,24 +6,26 @@
 #include <memory>
 
 class PMTree {
-private:
+ private:
     struct Node {
         char value;
         std::vector<std::shared_ptr<Node>> children;
-        Node(char val) : value(val) {}
+        explicit Node(char val) : value(val) {}
     };
-    
+
     std::shared_ptr<Node> root;
     std::vector<char> originalSymbols;
-    
-    void buildTree(std::shared_ptr<Node> node, std::vector<char> remaining);
-    void getAllPermutations(std::shared_ptr<Node> node, std::vector<char>& current, 
-                           std::vector<std::vector<char>>& result);
+
+    void buildTree(std::shared_ptr<Node> node,
+                   std::vector<char> remaining);
+    void getAllPermutations(std::shared_ptr<Node> node,
+                            std::vector<char>& current,
+                            std::vector<std::vector<char>>& result);
     int getSubtreeSize(std::shared_ptr<Node> node) const;
-    
-public:
-    PMTree(const std::vector<char>& symbols);
-    
+
+ public:
+    explicit PMTree(const std::vector<char>& symbols);
+
     friend std::vector<std::vector<char>> getAllPerms(PMTree& tree);
     friend std::vector<char> getPerm1(PMTree& tree, int num);
     friend std::vector<char> getPerm2(PMTree& tree, int num);
