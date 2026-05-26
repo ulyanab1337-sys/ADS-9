@@ -1,43 +1,45 @@
 // Copyright 2022 NNTU-CS
-#include <iostream>
-#include <fstream>
-#include <locale>
-#include <cstdlib>
 #include "tree.h"
 
-PMTree::PMTree(const std::vector<char>& symbols) : originalSymbols(symbols) {
+#include <memory>
+#include <vector>
+
+PMTree::PMTree(const std::vector<char>& symbols)
+    : originalSymbols(symbols) {
     root = std::make_shared<Node>('\0');
     buildTree(root, symbols);
 }
 
-void PMTree::buildTree(std::shared_ptr<Node> node, std::vector<char> remaining) {
+void PMTree::buildTree(std::shared_ptr<Node> node,
+                       std::vector<char> remaining) {
     if (remaining.empty()) {
         return;
     }
-    
+
     for (size_t i = 0; i < remaining.size(); i++) {
         char ch = remaining[i];
         auto child = std::make_shared<Node>(ch);
         node->children.push_back(child);
-        
+
         std::vector<char> newRemaining;
         for (size_t j = 0; j < remaining.size(); j++) {
             if (j != i) {
                 newRemaining.push_back(remaining[j]);
             }
         }
-        
+
         buildTree(child, newRemaining);
     }
 }
 
-void PMTree::getAllPermutations(std::shared_ptr<Node> node, std::vector<char>& current, 
-                               std::vector<std::vector<char>>& result) {
+void PMTree::getAllPermutations(std::shared_ptr<Node> node,
+                                std::vector<char>& current,
+                                std::vector<std::vector<char>>& result) {
     if (node->children.empty()) {
         result.push_back(current);
         return;
     }
-    
+
     for (auto& child : node->children) {
         current.push_back(child->value);
         getAllPermutations(child, current, result);
@@ -49,7 +51,7 @@ int PMTree::getSubtreeSize(std::shared_ptr<Node> node) const {
     if (node->children.empty()) {
         return 1;
     }
-    
+
     int size = 0;
     for (auto& child : node->children) {
         size += getSubtreeSize(child);
@@ -76,7 +78,7 @@ std::vector<char> getPerm2(PMTree& tree, int num) {
     std::vector<char> result;
     auto node = tree.root;
     std::vector<char> remaining = tree.originalSymbols;
-    
+
     while (node->children.size() > 0) {
         int cumulative = 0;
         for (auto& child : node->children) {
@@ -84,8 +86,9 @@ std::vector<char> getPerm2(PMTree& tree, int num) {
             if (num < cumulative + subtreeSize) {
                 result.push_back(child->value);
                 node = child;
-                
-                for (auto it = remaining.begin(); it != remaining.end(); ++it) {
+
+                for (auto it = remaining.begin(); it != remaining.end();
+                     ++it) {
                     if (*it == child->value) {
                         remaining.erase(it);
                         break;
@@ -96,6 +99,6 @@ std::vector<char> getPerm2(PMTree& tree, int num) {
             cumulative += subtreeSize;
         }
     }
-    
+
     return result;
 }
