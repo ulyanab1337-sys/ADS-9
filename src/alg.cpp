@@ -10,79 +10,65 @@
 
 namespace {
 
-int64_t computeFactorial(int n) {
-    int64_t output = 1;
-
+int64_t factCalc(int n) {
+    int64_t res = 1;
     for (int i = 2; i <= n; ++i)
-        output *= i;
-
-    return output;
+        res *= i;
+    return res;
 }
 
-void traverseAll(NodeItem* ptr,
-                 std::vector<char>* buffer,
-                 std::vector<std::vector<char>>* storage) {
-    if (ptr->symbol != '\0')
-        buffer->push_back(ptr->symbol);
+void recursiveWalk(PMNode* curNode,
+                   std::vector<char>* tmp,
+                   std::vector<std::vector<char>>* out) {
+    if (curNode->value != '\0')
+        tmp->push_back(curNode->value);
 
-    if (ptr->branches.empty()) {
-        if (!buffer->empty())
-            storage->push_back(*buffer);
+    if (curNode->children.empty()) {
+        if (!tmp->empty())
+            out->push_back(*tmp);
     } else {
-        for (auto branch : ptr->branches)
-            traverseAll(branch, buffer, storage);
+        for (auto nxt : curNode->children)
+            recursiveWalk(nxt, tmp, out);
     }
 
-    if (ptr->symbol != '\0')
-        buffer->pop_back();
+    if (curNode->value != '\0')
+        tmp->pop_back();
 }
 
 }  // namespace
 
-std::vector<std::vector<char>> getAllPerms(PermutationTree& tree) {
-    std::vector<std::vector<char>> storage;
-    std::vector<char> buffer;
-
-    traverseAll(tree.fetchRoot(), &buffer, &storage);
-
-    return storage;
+std::vector<std::vector<char>> getAllPerms(PMTree& tr) {
+    std::vector<std::vector<char>> out;
+    std::vector<char> tmp;
+    recursiveWalk(tr.getRoot(), &tmp, &out);
+    return out;
 }
 
-std::vector<char> getPerm1(PermutationTree& tree, int position) {
-    std::vector<std::vector<char>> allVariants = getAllPerms(tree);
-
-    if (position < 1 || position > static_cast<int>(allVariants.size()))
+std::vector<char> getPerm1(PMTree& tr, int pos) {
+    std::vector<std::vector<char>> all = getAllPerms(tr);
+    if (pos < 1 || pos > static_cast<int>(all.size()))
         return {};
-
-    return allVariants[position - 1];
+    return all[pos - 1];
 }
 
-std::vector<char> getPerm2(PermutationTree& tree, int position) {
-    int64_t totalCombinations = computeFactorial(tree.fetchSize());
-
-    if (position < 1 || position > totalCombinations)
+std::vector<char> getPerm2(PMTree& tr, int pos) {
+    int64_t total = factCalc(tr.getSize());
+    if (pos < 1 || pos > total)
         return {};
 
-    std::vector<char> output;
+    std::vector<char> res;
+    PMNode* cur = tr.getRoot();
+    int left = tr.getSize();
+    int64_t idx = pos - 1;
 
-    NodeItem* current = tree.fetchRoot();
-
-    int remaining = tree.fetchSize();
-    int64_t idx = position - 1;
-
-    while (!current->branches.empty()) {
-        int64_t groupSize = computeFactorial(remaining - 1);
-
-        int chosen = static_cast<int>(idx / groupSize);
-
-        idx %= groupSize;
-
-        current = current->branches[chosen];
-
-        output.push_back(current->symbol);
-
-        --remaining;
+    while (!cur->children.empty()) {
+        int64_t sz = factCalc(left - 1);
+        int sel = static_cast<int>(idx / sz);
+        idx %= sz;
+        cur = cur->children[sel];
+        res.push_back(cur->value);
+        --left;
     }
 
-    return output;
+    return res;
 }
